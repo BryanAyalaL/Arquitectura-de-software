@@ -4,61 +4,74 @@
 * **Fecha:** 2026-03-13
 * **Autores:** Bryan Ayala Londoño · Juan Esteban Chavarria · Paul Andrés Furnieles Meza
 
+---
+
 ## Contexto
 
-El sistema de planificación de viajes con IA gestiona datos personales, financieros y de reservas de múltiples usuarios con roles diferenciados (administrador, gerente, usuario). Debe generar itinerarios personalizados en tiempo real integrándose con servicios externos (aerolíneas, hoteles, actividades) y operar bajo un cronograma académico fijo con un equipo de tres personas.
+¿Cuál es el problema que estamos tratando de resolver? ¿Qué limitaciones o requisitos tenemos?
 
-En el Laboratorio 1 se identificaron 19 requisitos no funcionales mapeados al estándar ISO/IEC 25010. La priorización MoSCoW del Laboratorio 2 determinó que seis de ellos son **obligatorios**: sin satisfacerlos el sistema no puede entregarse ni operar correctamente. Las restricciones concretas son:
+De los 19 requisitos no funcionales identificados en ADR-001, el equipo debe determinar cuáles son obligatorios para que el sistema pueda entregarse y operar correctamente. La priorización parte directamente de los drivers del proyecto:
 
-- **Tecnológica:** motor de base de datos MySQL obligatorio (Driver-14 del proyecto).
-- **Temporal:** cronograma académico fijo; el equipo no puede asumir reprocesos por decisiones erróneas de arquitectura.
-- **Funcional:** el sistema maneja pagos reales, autenticación de usuarios y reservas activas; errores de seguridad o integridad tienen consecuencias económicas y legales.
-- **Operativa:** una plataforma de reservas de viajes debe estar disponible 24/7; caídas prolongadas afectan reservas en curso.
+- `Driver-funcional-01` (Autenticación y gestión de identidad) y `Atributo-de-calidad-01/02` (control de acceso y seguridad en autenticación) hacen que la seguridad sea innegociable desde el primer sprint.
+- `Driver-funcional-02` a `Driver-funcional-09` (reservas, tours, alojamiento, transporte, actividades, pagos, seguros, opiniones) cubren nueve dominios que deben desarrollarse en paralelo, lo que convierte la modularidad en un requisito estructural del equipo.
+- `Driver-funcional-07` (Gestión de pagos) maneja dinero real; cualquier error de integridad tiene consecuencias económicas y legales.
+- `Atributo-de-calidad-04` (Disponibilidad de información) y la naturaleza 24/7 de una plataforma de reservas hacen que la disponibilidad sea crítica para la operación.
+- `Restricción-01` (MySQL) y `Restricción-02` (cronograma académico fijo) acotan el espacio de solución: no se pueden asumir reprocesos por decisiones erróneas.
+
+---
 
 ## Decisión
 
-Se adoptan los siguientes **seis atributos de calidad como Must Have**, cada uno vinculado a una táctica arquitectónica concreta:
+¿Qué solución elegimos y por qué? (Sea específico con tecnologías, patrones o herramientas).
+
+Se adoptan los siguientes **seis atributos de calidad como Must Have**, cada uno trazado a sus drivers y vinculado a una táctica arquitectónica concreta:
 
 **1. Rendimiento — Respuesta ≤ 2 segundos (ISO 25010: Eficiencia de Desempeño)**
-El sistema debe responder en ≤ 2 000 ms (p95) en generación de itinerarios y actualizaciones de disponibilidad. Se implementará mediante caché de recomendaciones con Redis, índices optimizados en MySQL y procesamiento asíncrono no bloqueante.
+Driver: objetivo general del proyecto + `Atributo-de-calidad-04`. El sistema debe responder en ≤ 2 000 ms (p95) en generación de itinerarios y actualizaciones de disponibilidad. Táctica: caché con Redis, índices optimizados en `Restricción-01 MySQL`, procesamiento asíncrono no bloqueante.
 
 **2. Seguridad — Autenticación con JWT (ISO 25010: Autenticidad)**
-Toda autenticación usará tokens JWT firmados con HMAC-SHA256, expiración ≤ 24 h y rotación de refresh tokens. Un middleware de validación central protegerá el 100 % de los endpoints privados.
+Driver: `Driver-funcional-01 (Autenticación y gestión de identidad)` + `Atributo-de-calidad-02 (Seguridad en autenticación)`. Tokens JWT firmados HMAC-SHA256, expiración ≤ 24 h, rotación de refresh tokens. Middleware central protege el 100 % de los endpoints privados.
 
-**3. Seguridad — Control de acceso RBAC (ISO 25010: Control de Acceso)**
-Los tres roles definidos en el proyecto (administrador, gerente, usuario) tendrán permisos diferenciados implementados mediante guards en la capa de controladores y una tabla `roles_permisos` en MySQL, siguiendo el principio de mínimo privilegio.
+**3. Seguridad — Control de Acceso RBAC (ISO 25010: Control de Acceso)**
+Driver: `Atributo-de-calidad-01 (Seguridad / control de acceso por roles)`. Los tres roles del proyecto (administrador, gerente, usuario) con permisos diferenciados mediante guards en controladores y tabla `roles_permisos` en MySQL. Principio de mínimo privilegio aplicado en todos los endpoints.
 
 **4. Fiabilidad — Disponibilidad ≥ 99,5 % (ISO 25010: Disponibilidad)**
-Se garantizará un uptime mensual ≥ 99,5 % (máx. 3,6 h de inactividad) y MTTR ≤ 4 h mediante health checks periódicos, reintentos con backoff exponencial y monitoreo activo.
+Driver: `Atributo-de-calidad-04 (Disponibilidad de información)` + `Driver-funcional-02 (Gestión de reservas)`. Uptime mensual ≥ 99,5 % (máx. 3,6 h de inactividad) y MTTR ≤ 4 h. Táctica: health checks periódicos, reintentos con backoff exponencial, monitoreo activo.
 
 **5. Mantenibilidad — Módulos independientes por dominio (ISO 25010: Modularidad)**
-El código se organizará en módulos desacoplados por dominio de negocio: identidad, reservas, pagos, tours, alojamiento, transporte, actividades y seguros. El acoplamiento entre módulos no superará el 10 %, verificado en cada code review mediante métricas de dependencias.
+Driver: `Restricción-03 (contexto académico)` + todos los `Driver-funcional-01` a `Driver-funcional-09`. Un módulo por driver funcional: identidad, reservas, tours, alojamiento, transporte, actividades, pagos, seguros y opiniones. Acoplamiento ≤ 10 % verificado en cada code review.
 
-**6. Seguridad — Integridad de pagos (ISO 25010: Integridad)**
-Todas las transacciones de pago serán atómicas (ACID en MySQL), idempotentes mediante `idempotency_key` único por operación, y auditadas en una tabla inmutable con hash SHA-256. La meta es 0 transacciones duplicadas o corruptas.
+**6. Seguridad — Integridad de Pagos (ISO 25010: Integridad)**
+Driver: `Driver-funcional-07 (Gestión de pagos)`. Transacciones atómicas (ACID en `Restricción-01 MySQL`), `idempotency_key` único por operación, tabla de auditoría inmutable con hash SHA-256. Meta: 0 transacciones duplicadas o corruptas.
+
+---
 
 ## Alternativas Consideradas
 
-- **Alternativa A — Priorizar usabilidad como Must Have en lugar de modularidad:** Se descartó porque la usabilidad puede mejorarse iterativamente en cada sprint, mientras que la falta de modularidad desde el inicio bloquea el desarrollo paralelo del equipo y genera conflictos de integración irrecuperables dentro del cronograma.
+- **Alternativa A — Priorizar usabilidad (`Atributo-de-calidad-03`) como Must Have en lugar de modularidad:** Se descartó porque la usabilidad puede mejorarse iterativamente en cada sprint, mientras que sin modularidad desde el inicio los nueve dominios de `Driver-funcional-01` a `Driver-funcional-09` generarían conflictos de integración irrecuperables dentro de `Restricción-02 (cronograma)`.
 
-- **Alternativa B — Incluir interoperabilidad con APIs externas como Must Have:** Se descartó porque los módulos core (reservas, pagos, autenticación) pueden desarrollarse con datos mock antes de conectar servicios externos reales; promoverla a Must Have agrega dependencias externas que podrían bloquear etapas tempranas.
+- **Alternativa B — Incluir interoperabilidad con APIs externas como Must Have:** Se descartó porque `Driver-funcional-02` a `Driver-funcional-06` pueden desarrollarse con datos mock antes de conectar servicios externos reales; promoverla a Must Have agrega dependencias que bloquearían el desarrollo del core en etapas tempranas.
 
-- **Alternativa C — Relajar disponibilidad al 99 % mensual:** Se descartó porque 99 % permite hasta 7,2 horas de inactividad mensual, inaceptable para una plataforma con reservas activas; el costo de implementar health checks y reintentos es bajo comparado con el riesgo de pérdida de reservas.
+- **Alternativa C — Relajar disponibilidad al 99 % mensual:** Se descartó porque 99 % permite hasta 7,2 h de inactividad mensual, inaceptable para `Driver-funcional-02 (Gestión de reservas)` con reservas activas; el costo de implementar health checks es bajo comparado con el riesgo.
 
-- **Alternativa D — Autenticación por sesión (cookies) en lugar de JWT:** Se descartó porque el sistema expone una API stateless consumida potencialmente por clientes móviles y de terceros; las sesiones en servidor añaden estado que complica la escalabilidad horizontal.
+- **Alternativa D — Autenticación por sesión (cookies) en lugar de JWT:** Se descartó porque `Driver-funcional-01` exige una API stateless consumible por clientes móviles y de terceros; las sesiones en servidor añaden estado que complica la escalabilidad horizontal.
+
+---
 
 ## Consecuencias
 
 ### ✅ Positivas
-- Los seis atributos establecen criterios de aceptación objetivos y medibles desde el primer sprint, reduciendo ambigüedades en revisiones de entrega.
-- JWT y RBAC permiten una arquitectura stateless que facilita escalar horizontalmente sin compartir estado de sesión entre instancias.
-- La modularidad por dominio habilita el trabajo paralelo del equipo sin bloqueos mutuos y simplifica las pruebas unitarias por módulo aislado.
-- Las transacciones ACID con idempotency keys protegen la integridad financiera y generan un log de auditoría completo sin esfuerzo adicional.
-- Documentar estas decisiones formalmente reduce el riesgo de regresiones arquitectónicas al incorporar nuevas funcionalidades.
+
+- Cada Must Have está trazado a al menos un driver del proyecto (`Driver-funcional`, `Atributo-de-calidad` o `Restricción`), lo que justifica su obligatoriedad de forma objetiva ante el docente y el equipo.
+- JWT y RBAC derivados de `Driver-funcional-01` y `Atributo-de-calidad-01/02` permiten una arquitectura stateless que facilita la escalabilidad horizontal.
+- La modularidad por dominio, derivada de cubrir todos los `Driver-funcional`, habilita el trabajo paralelo del equipo sin bloqueos mutuos.
+- Las transacciones ACID de `Restricción-01 MySQL` con idempotency keys protegen `Driver-funcional-07` sin complejidad adicional de sistemas distribuidos.
+- Documentar la trazabilidad driver → atributo → táctica reduce el riesgo de regresiones arquitectónicas al incorporar nuevas funcionalidades.
 
 ### ❌ Negativas / Riesgos
-- Satisfacer rendimiento (≤ 2 seg) y disponibilidad (99,5 %) simultáneamente requiere configurar infraestructura adicional (Redis, monitoreo) que consume tiempo del cronograma académico.
-- El RBAC añade complejidad a la capa de controladores; cualquier cambio en la lógica de roles requiere actualizar código y tabla de permisos en base de datos.
-- La modularidad estricta exige invertir tiempo en diseño de interfaces entre módulos antes de codificar, lo que puede percibirse como trabajo sin resultados visibles en las primeras semanas.
-- Los cinco atributos **Should Have** (interoperabilidad, tolerancia a fallos, usabilidad medida, cobertura ≥ 70 %, cifrado en reposo) quedan como deuda técnica planificada a abordar en iteraciones posteriores.
-- Si la carga real supera las estimaciones de diseño, el umbral de 2 segundos puede no cumplirse sin rediseñar la estrategia de caché, lo que representa un riesgo de rendimiento en producción.
+
+- Satisfacer rendimiento y disponibilidad simultáneamente requiere infraestructura adicional (Redis, monitoreo) que compite con `Restricción-02 (cronograma académico)`.
+- El RBAC derivado de `Atributo-de-calidad-01` añade complejidad a los controladores; cambios en la lógica de roles requieren actualizar código y la tabla de permisos en `Restricción-01 MySQL`.
+- La modularidad estricta para cubrir `Driver-funcional-01` a `Driver-funcional-09` exige diseñar interfaces entre módulos antes de codificar, lo que puede percibirse como trabajo sin resultados visibles en las primeras semanas.
+- Los cinco atributos Should Have (interoperabilidad, tolerancia a fallos, usabilidad, cobertura ≥ 70 %, cifrado en reposo) quedan como deuda técnica planificada para iteraciones posteriores.
+- Si la carga real supera las estimaciones, el umbral de 2 segundos puede no cumplirse sin rediseñar la estrategia de caché, representando un riesgo de rendimiento en producción.

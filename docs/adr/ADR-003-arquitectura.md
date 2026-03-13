@@ -10,24 +10,22 @@
 
 ¿Cuál es el problema que estamos tratando de resolver? ¿Qué limitaciones o requisitos tenemos?
 
-El equipo debe elegir un único patrón arquitectónico base para el sistema de planificación de viajes con IA. Esta decisión es la más importante del proyecto porque condicionará todas las decisiones técnicas posteriores: estructura de carpetas, forma de integrar la base de datos MySQL, estrategia de pruebas y distribución del trabajo entre los tres integrantes del equipo.
+El equipo debe elegir un único patrón arquitectónico base que soporte todos los drivers del proyecto y sea viable dentro de las restricciones académicas. Esta decisión condiciona la estructura de carpetas, la estrategia de pruebas, la forma de integrar `Restricción-01 (MySQL)` y la distribución del trabajo entre los tres integrantes.
 
 **Respuestas al cuestionario de diseño:**
 
 **¿El equipo tiene experiencia en microservicios?**
-No. Los tres integrantes tienen experiencia en desarrollo web con arquitecturas monolíticas y en capas. Ninguno ha desplegado ni operado un sistema basado en microservicios en un entorno real. Implementar microservicios implicaría aprender simultáneamente orquestación de contenedores (Docker/Kubernetes), API Gateway, comunicación entre servicios (REST/mensajería) y gestión de transacciones distribuidas, todo dentro del cronograma académico fijo. El riesgo de no entregar es alto.
+No. Los tres integrantes tienen experiencia en arquitecturas monolíticas y en capas. Implementar microservicios implicaría aprender orquestación de contenedores, API Gateway, comunicación entre servicios y transacciones distribuidas dentro de `Restricción-02 (cronograma académico fijo)`. El riesgo de no entregar es alto, especialmente para garantizar `Driver-funcional-07 (Gestión de pagos)` con integridad ACID, que en microservicios requeriría el patrón Saga.
 
 **¿El sistema tiene dominios claramente separados?**
-Sí. El documento de proyecto define nueve dominios de negocio independientes: identidad/autenticación, reservas, pagos, tours, alojamiento, transporte, actividades, seguros y opiniones. Sin embargo, estos dominios comparten la misma base de datos MySQL y no tienen requisitos de escalado independiente que justifiquen desplegarlos como servicios autónomos en esta fase académica.
+Sí. El documento de proyecto define nueve dominios independientes trazados a drivers funcionales concretos: `Driver-funcional-01` (identidad), `Driver-funcional-02` (reservas), `Driver-funcional-03` (tours), `Driver-funcional-04` (alojamiento), `Driver-funcional-05` (transporte), `Driver-funcional-06` (actividades), `Driver-funcional-07` (pagos), `Driver-funcional-08` (seguros) y `Driver-funcional-09` (opiniones). Sin embargo, estos dominios comparten `Restricción-01 (MySQL)` y no tienen requisitos de escalado independiente que justifiquen desplegarlos como servicios autónomos.
 
-**¿Qué indican los atributos Must Have del Lab 2?**
-- **Modularidad (RNF-05):** exige módulos independientes por dominio con acoplamiento ≤ 10 %, pero no impone despliegue independiente.
-- **Rendimiento (RNF-01):** respuesta ≤ 2 seg; alcanzable con caché y optimización de queries en un monolito bien diseñado.
-- **Disponibilidad (RNF-04):** uptime ≥ 99,5 %; más fácil de garantizar en un único proceso que en múltiples servicios distribuidos con un equipo sin experiencia en operaciones.
-- **JWT + RBAC (RNF-02/03):** implementables como middleware en cualquier patrón.
-- **Integridad de pagos (RNF-06):** las transacciones ACID de MySQL son nativas en un monolito; en microservicios requerirían el patrón Saga, que el equipo no domina.
-
-La combinación de falta de experiencia en sistemas distribuidos, cronograma académico fijo, base de datos MySQL compartida y dominios que necesitan modularidad lógica (no física) apunta hacia un patrón que sea estructurado, testeable y familiar para el equipo.
+**¿Qué indican los atributos Must Have del ADR-002?**
+- `RNF-05 — Modularidad` (derivado de cubrir todos los `Driver-funcional`): exige módulos independientes con acoplamiento ≤ 10 %, pero no impone despliegue independiente.
+- `RNF-01 — Rendimiento`: respuesta ≤ 2 seg; alcanzable con caché y queries optimizadas en un monolito bien diseñado sobre `Restricción-01 MySQL`.
+- `RNF-04 — Disponibilidad` (derivado de `Atributo-de-calidad-04`): uptime ≥ 99,5 %; más fácil de garantizar en un único proceso que en múltiples servicios distribuidos con un equipo sin experiencia operacional.
+- `RNF-02/03 — JWT + RBAC` (derivados de `Driver-funcional-01` y `Atributo-de-calidad-01/02`): implementables como middleware en cualquier patrón.
+- `RNF-06 — Integridad de pagos` (derivado de `Driver-funcional-07`): las transacciones ACID de `Restricción-01 MySQL` son nativas en un monolito; en microservicios requerirían patrón Saga.
 
 ---
 
@@ -37,46 +35,45 @@ La combinación de falta de experiencia en sistemas distribuidos, cronograma aca
 
 Se elige la **Arquitectura Hexagonal (Puertos y Adaptadores)** como patrón base del sistema.
 
-La arquitectura hexagonal organiza el sistema en tres zonas concéntricas:
+La arquitectura hexagonal organiza el sistema en tres zonas concéntricas que mapean directamente a los drivers del proyecto:
 
-- **Núcleo de dominio (Domain):** contiene las entidades de negocio, reglas de dominio y puertos (interfaces). No depende de ninguna tecnología externa. Ejemplo: la entidad `Reserva` con sus reglas de validación y el puerto `IReservaRepository`.
-- **Capa de aplicación (Application):** contiene los casos de uso (servicios de aplicación) que orquestan el dominio. Ejemplo: `CrearReservaUseCase`, `ProcesarPagoUseCase`.
-- **Adaptadores (Infrastructure / Presentation):** implementaciones concretas de los puertos. Incluye el adaptador de base de datos (MySQL con el ORM elegido), el adaptador HTTP (controladores REST), el adaptador de autenticación (middleware JWT) y futuros adaptadores para APIs externas.
+- **Núcleo de dominio (Domain):** contiene las entidades de negocio y reglas de dominio de cada `Driver-funcional`, y los puertos (interfaces). No depende de ninguna tecnología externa ni de `Restricción-01 MySQL`. Ejemplo: entidad `Reserva` con sus reglas de validación (`Driver-funcional-02`) y el puerto `IReservaRepository`.
+- **Capa de aplicación (Application):** contiene los casos de uso que orquestan el dominio para cada driver. Ejemplo: `CrearReservaUseCase` (`Driver-funcional-02`), `ProcesarPagoUseCase` (`Driver-funcional-07`), `LoginUseCase` (`Driver-funcional-01`).
+- **Adaptadores (Infrastructure / Presentation):** implementaciones concretas de los puertos. Incluye el adaptador de base de datos (`Restricción-01 MySQL`), el adaptador HTTP (controladores REST), el middleware JWT/RBAC (`Atributo-de-calidad-01/02`) y futuros adaptadores para APIs externas (`Driver-funcional-03` a `Driver-funcional-06`).
 
-**¿Por qué hexagonal y no las otras opciones?**
+Este patrón satisface directamente `RNF-05 (Modularidad)` porque cada `Driver-funcional` tiene su propio núcleo aislado con interfaces explícitas. A diferencia de 3 capas, el dominio no depende de `Restricción-01 MySQL`, lo que permite pruebas unitarias sin base de datos (apoya `RNF-10 Should Have — cobertura ≥ 70 %`). A diferencia de microservicios, todo se despliega como un único proceso, manteniendo las transacciones ACID nativas para `Driver-funcional-07` y siendo operable por un equipo sin experiencia distribuida dentro de `Restricción-02`.
 
-Satisface directamente RNF-05 (modularidad): cada dominio tiene su propio núcleo aislado con interfaces explícitas, garantizando acoplamiento ≤ 10 % de forma natural. A diferencia de 3 capas, el núcleo de dominio no depende de la base de datos, lo que facilita las pruebas unitarias sin levantar MySQL (satisface RNF implícito de capacidad de prueba). A diferencia de microservicios, todo se despliega como un único proceso, manteniendo las transacciones ACID nativas de MySQL para los pagos (RNF-06) y simplificando la operación para un equipo sin experiencia en sistemas distribuidos.
-
-**Estructura de módulos resultante:**
+**Estructura de módulos resultante (un módulo por driver funcional):**
 
 ```
 src/
 ├── domain/
-│   ├── identity/        # entidades: Usuario, Rol; puerto: IUsuarioRepository
-│   ├── reservas/        # entidades: Reserva; puerto: IReservaRepository
-│   ├── pagos/           # entidades: Pago; puerto: IPagoRepository
-│   ├── tours/
-│   ├── alojamiento/
-│   ├── transporte/
-│   ├── actividades/
-│   └── seguros/
+│   ├── identity/        # Driver-funcional-01: Usuario, Rol; IUsuarioRepository
+│   ├── reservas/        # Driver-funcional-02: Reserva; IReservaRepository
+│   ├── pagos/           # Driver-funcional-07: Pago; IPagoRepository
+│   ├── tours/           # Driver-funcional-03
+│   ├── alojamiento/     # Driver-funcional-04
+│   ├── transporte/      # Driver-funcional-05
+│   ├── actividades/     # Driver-funcional-06
+│   ├── seguros/         # Driver-funcional-08
+│   └── opiniones/       # Driver-funcional-09
 ├── application/
-│   ├── identity/        # casos de uso: LoginUseCase, RegistroUseCase
-│   ├── reservas/        # casos de uso: CrearReservaUseCase
-│   └── pagos/           # casos de uso: ProcesarPagoUseCase
+│   ├── identity/        # LoginUseCase, RegistroUseCase, RecuperarPasswordUseCase
+│   ├── reservas/        # CrearReservaUseCase, ModificarReservaUseCase, CancelarReservaUseCase
+│   └── pagos/           # ProcesarPagoUseCase (ACID via Restricción-01)
 └── infrastructure/
-    ├── persistence/     # adaptadores MySQL (repositorios concretos)
-    ├── http/            # controladores REST + middleware JWT/RBAC
-    └── external/        # adaptadores para APIs de aerolíneas, hoteles
+    ├── persistence/     # Adaptadores MySQL (Restricción-01) por dominio
+    ├── http/            # Controladores REST + middleware JWT (RNF-02) + RBAC (RNF-03)
+    └── external/        # Adaptadores para APIs de aerolíneas, hoteles, actividades
 ```
 
 ---
 
 ## Alternativas Consideradas
 
-- **Alternativa A — Arquitectura en 3 Capas (Presentación, Negocio, Datos):** Se descartó porque aunque es familiar para el equipo, la capa de negocio típicamente depende directamente de la capa de datos, lo que dificulta las pruebas unitarias (se necesita una base de datos real para probar cualquier regla de negocio) y tiende a generar acoplamiento alto a medida que el sistema crece. No satisface RNF-05 con la misma solidez que hexagonal.
+- **Alternativa A — Arquitectura en 3 Capas (Presentación, Negocio, Datos):** Se descartó porque aunque es familiar para el equipo, la capa de negocio típicamente depende de la capa de datos, lo que obliga a levantar `Restricción-01 MySQL` para probar cualquier regla de dominio de los `Driver-funcional`. No satisface `RNF-05 (Modularidad)` con la misma solidez que hexagonal y tiende a generar acoplamiento alto a medida que los nueve dominios crecen.
 
-- **Alternativa B — Microservicios con API Gateway:** Se descartó por tres razones concretas: (1) el equipo no tiene experiencia operando servicios distribuidos; (2) las transacciones ACID de MySQL que garantizan RNF-06 (integridad de pagos) se vuelven transacciones distribuidas que requieren el patrón Saga, añadiendo complejidad que el equipo no puede asumir en el cronograma; (3) la disponibilidad (RNF-04) es más difícil de garantizar cuando depende de que múltiples servicios estén activos simultáneamente.
+- **Alternativa B — Microservicios con API Gateway:** Se descartó por tres razones trazadas a drivers concretos: (1) el equipo no tiene experiencia operando servicios distribuidos, lo que pone en riesgo `Restricción-02 (cronograma)`; (2) `Driver-funcional-07 (Gestión de pagos)` requeriría patrón Saga para mantener integridad ACID al no poder usar transacciones nativas de `Restricción-01 MySQL`; (3) `RNF-04 (Disponibilidad ≥ 99,5 %)` es más difícil de garantizar cuando depende de que múltiples servicios estén activos simultáneamente.
 
 ---
 
@@ -84,14 +81,14 @@ src/
 
 ### ✅ Positivas
 
-- El núcleo de dominio es independiente de MySQL, lo que permite escribir pruebas unitarias rápidas sin base de datos, facilitando alcanzar la cobertura ≥ 70 % (RNF-10 Should Have).
-- Los puertos (interfaces) entre capas garantizan el acoplamiento ≤ 10 % requerido por RNF-05, y cada integrante del equipo puede trabajar en su módulo de dominio sin tocar el código de los otros.
-- Añadir nuevos adaptadores externos (una aerolínea nueva, un proveedor de pagos diferente) no requiere modificar el dominio ni los casos de uso, solo implementar un nuevo adaptador en `infrastructure/external/`.
-- Las transacciones ACID de MySQL se mantienen nativas en la capa de persistencia, satisfaciendo RNF-06 sin complejidad adicional.
-- La estructura es familiar conceptualmente para el equipo (es un monolito organizado) y permite entregar un MVP funcional dentro del cronograma académico.
+- El núcleo de dominio es independiente de `Restricción-01 MySQL`, permitiendo pruebas unitarias rápidas sin base de datos y facilitando alcanzar `RNF-10 Should Have (cobertura ≥ 70 %)`.
+- Los puertos entre capas garantizan el acoplamiento ≤ 10 % requerido por `RNF-05`, y cada integrante del equipo puede trabajar en el módulo de su `Driver-funcional` asignado sin tocar el código de los otros.
+- Añadir nuevos adaptadores externos para `Driver-funcional-03` a `Driver-funcional-06` (aerolíneas, hoteles, actividades) no requiere modificar el dominio ni los casos de uso, solo implementar un nuevo adaptador en `infrastructure/external/`.
+- Las transacciones ACID de `Restricción-01 MySQL` se mantienen nativas en la capa de persistencia, satisfaciendo `RNF-06 (Integridad de pagos)` de `Driver-funcional-07` sin complejidad adicional.
+- La estructura es un monolito organizado, entregable dentro de `Restricción-02 (cronograma académico)` por un equipo sin experiencia en sistemas distribuidos.
 
 ### ❌ Negativas / Riesgos
 
-- La arquitectura hexagonal tiene una curva de aprendizaje inicial: el equipo deberá invertir tiempo en entender la separación entre puertos e interfaces antes de codificar las primeras funcionalidades.
-- Al ser un único proceso desplegado, si en el futuro se requiere escalar independientemente el módulo de reservas del módulo de pagos, será necesario extraerlos a microservicios (migración costosa). Esta deuda arquitectónica es aceptada conscientemente dado el contexto académico.
-- Sin disciplina del equipo, es fácil romper las reglas de la arquitectura (por ejemplo, importar un repositorio directamente en el dominio). Se requiere una revisión explícita de dependencias en cada code review.
+- La arquitectura hexagonal tiene una curva de aprendizaje inicial: el equipo deberá invertir tiempo en entender la separación de puertos e interfaces antes de codificar los primeros `Driver-funcional`, compitiendo con `Restricción-02`.
+- Si en el futuro se requiere escalar independientemente `Driver-funcional-02 (reservas)` de `Driver-funcional-07 (pagos)`, será necesario extraerlos a microservicios (migración costosa). Esta deuda arquitectónica es aceptada conscientemente dado `Restricción-03 (contexto académico)`.
+- Sin disciplina del equipo es fácil romper las reglas importando un repositorio directamente en el dominio. Se requiere revisión explícita de dependencias en cada code review para proteger `RNF-05`.
