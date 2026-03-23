@@ -1,6 +1,6 @@
 # ADR-002: Priorización de Atributos de Calidad (Matriz MoSCoW)
 
-## 📌 Contexto
+##  Contexto
 
 A partir del ADR-001 se identificaron los atributos de calidad del sistema de planificación de viajes, definidos mediante escenarios medibles.
 
@@ -14,13 +14,13 @@ El objetivo de este ADR es priorizar dichos atributos utilizando la técnica MoS
 
 ---
 
-## 🎯 Decisión
+##  Decisión
 
 Se clasificaron los atributos de calidad en categorías Must Have, Should Have y Could Have, basados en su impacto en el sistema.
 
 ---
 
-### 🟥 Must Have (Obligatorios)
+###  Must Have (Obligatorios)
 
 | Atributo | Justificación |
 |----------|--------------|
@@ -43,7 +43,7 @@ Se clasificaron los atributos de calidad en categorías Must Have, Should Have y
 
 ---
 
-### 🟩 Could Have (Deseables)
+###  Could Have (Deseables)
 
 | Atributo | Justificación |
 |----------|--------------|
@@ -52,7 +52,7 @@ Se clasificaron los atributos de calidad en categorías Must Have, Should Have y
 
 ---
 
-## ⚖️ Trade-offs Arquitectónicos
+##  Trade-offs Arquitectónicos
 
 Durante la priorización se identificaron los siguientes compromisos:
 
@@ -73,20 +73,20 @@ Durante la priorización se identificaron los siguientes compromisos:
 
 ---
 
-## 📌 Consecuencias
+##  Consecuencias
 
-### ✅ Positivas
+###  Positivas
 - Permite enfocar la arquitectura en atributos críticos
 - Mejora la toma de decisiones técnicas
 - Facilita la comunicación entre el equipo
 
-### ❌ Negativas
+###  Negativas
 - Incremento en la complejidad del sistema
 - Necesidad de mayor control en la implementación
 
 ---
 
-## 🧠 Conclusión
+##  Conclusión
 
 La aplicación de la matriz MoSCoW permitió priorizar los atributos de calidad de forma estructurada, asegurando que las decisiones arquitectónicas se basen en necesidades reales del sistema.
 
