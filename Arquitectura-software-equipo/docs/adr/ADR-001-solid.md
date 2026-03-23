@@ -1,6 +1,6 @@
 # ADR-001: Identificación de Atributos de Calidad (ISO 25010)
 
-## 📌 Contexto
+##  Contexto
 
 El sistema a desarrollar es una aplicación de planificación de viajes que permite gestionar reservas, transporte, alojamiento, actividades y pagos en una sola plataforma.
 
@@ -13,44 +13,44 @@ Esto requiere definir atributos de calidad que guíen la arquitectura del sistem
 
 ---
 
-## 🎯 Atributos de Calidad Identificados
+##  Atributos de Calidad Identificados
 
-### 🔐 Seguridad
+###  Seguridad
 
 **Escenario:**
 Un usuario intenta acceder al sistema → el sistema valida sus credenciales → solo permite acceso si son correctas en menos de 2 segundos.
 
 ---
 
-### ⚡ Rendimiento
+###  Rendimiento
 
 **Escenario:**
 1000 usuarios consultan información simultáneamente → el sistema responde en menos de 2 segundos por petición.
 
 ---
 
-### 📈 Disponibilidad
+###  Disponibilidad
 
 **Escenario:**
 El sistema está en operación → debe estar disponible el 99% del tiempo durante el día.
 
 ---
 
-### 🧩 Mantenibilidad
+###  Mantenibilidad
 
 **Escenario:**
 Un desarrollador necesita modificar el módulo de reservas → el cambio se realiza sin afectar otros módulos del sistema.
 
 ---
 
-### 👤 Usabilidad
+###  Usabilidad
 
 **Escenario:**
 Un usuario nuevo accede al sistema → puede realizar una reserva sin ayuda en menos de 5 minutos.
 
 ---
 
-## 🧠 Drivers Arquitectónicos
+##  Drivers Arquitectónicos
 
 A partir del análisis del sistema, se identifican los siguientes drivers:
 
@@ -61,6 +61,6 @@ A partir del análisis del sistema, se identifican los siguientes drivers:
 
 ---
 
-## 📌 Conclusión
+##  Conclusión
 
 Los atributos de calidad identificados definen las bases para la toma de decisiones arquitectónicas, permitiendo diseñar un sistema que responda a las necesidades reales del usuario.
