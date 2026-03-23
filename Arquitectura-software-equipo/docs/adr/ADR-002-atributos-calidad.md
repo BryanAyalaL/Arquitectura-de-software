@@ -1,6 +1,6 @@
 # ADR-002: Priorización de Atributos de Calidad (Matriz MoSCoW)
 
-## 📌 Contexto
+##  Contexto
 
 El presente proyecto consiste en el desarrollo de una aplicación de planificación de viajes que integra múltiples servicios como reservas, pagos, transporte, alojamiento y actividades.
 
@@ -13,11 +13,11 @@ Estos problemas generan la necesidad de definir atributos de calidad que guíen 
 
 ---
 
-## 🎯 Decisión
+##  Decisión
 
 Se aplicó la técnica MoSCoW para priorizar los atributos de calidad identificados en el ADR-001.
 
-### 🟥 Must Have (Obligatorios)
+###  Must Have (Obligatorios)
 
 | Atributo | Justificación |
 |----------|--------------|
@@ -30,7 +30,7 @@ Se aplicó la técnica MoSCoW para priorizar los atributos de calidad identifica
 
 ---
 
-### 🟨 Should Have (Importantes)
+###  Should Have (Importantes)
 
 | Atributo | Justificación |
 |----------|--------------|
@@ -40,7 +40,7 @@ Se aplicó la técnica MoSCoW para priorizar los atributos de calidad identifica
 
 ---
 
-### 🟩 Could Have (Deseables)
+###  Could Have (Deseables)
 
 | Atributo | Justificación |
 |----------|--------------|
@@ -49,7 +49,7 @@ Se aplicó la técnica MoSCoW para priorizar los atributos de calidad identifica
 
 ---
 
-## ⚖️ Trade-offs Arquitectónicos
+##  Trade-offs Arquitectónicos
 
 Durante la priorización se identificaron los siguientes compromisos:
 
@@ -59,7 +59,7 @@ Durante la priorización se identificaron los siguientes compromisos:
 
 ---
 
-## 🔗 Trazabilidad
+##  Trazabilidad
 
 | Driver | Atributo | Prioridad |
 |--------|---------|----------|
@@ -70,19 +70,19 @@ Durante la priorización se identificaron los siguientes compromisos:
 
 ---
 
-## 📌 Consecuencias
+##  Consecuencias
 
-### ✅ Positivas
+###  Positivas
 - Claridad en la toma de decisiones arquitectónicas
 - Base sólida para seleccionar el patrón arquitectónico
 - Mejora la organización del desarrollo
 
-### ❌ Negativas
+###  Negativas
 - Incremento en la complejidad del sistema
 - Necesidad de mayor control en implementación
 
 ---
 
-## 🧠 Conclusión
+##  Conclusión
 
 La priorización de atributos de calidad permite enfocar el desarrollo en los aspectos críticos del sistema, asegurando que la arquitectura responda a las necesidades reales del proyecto.
