@@ -32,4 +32,12 @@ class UserRepository {
   }
 }
 
+async getAllUsers() {
+  try {
+    return await this.db.query("SELECT * FROM users");
+  } catch (error) {
+    throw new Error("Error al obtener usuarios");
+  }
+}
+
 module.exports = UserRepository;
