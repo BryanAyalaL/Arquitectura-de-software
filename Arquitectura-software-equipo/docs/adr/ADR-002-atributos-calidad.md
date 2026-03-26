@@ -33,7 +33,7 @@ Se clasificaron los atributos de calidad en categorías Must Have, Should Have y
 
 ---
 
-### 🟨 Should Have (Importantes)
+###  Should Have (Importantes)
 
 | Atributo | Justificación |
 |----------|--------------|
