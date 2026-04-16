@@ -59,27 +59,26 @@ Este cuestionario fue completado por el equipo para evaluar las capacidades téc
 
 ## 3. Decisión Final
 
-**Patrón Arquitectónico seleccionado:** Arquitectura en 3 Capas (Monolito Lógico).
+**Patrón Arquitectónico seleccionado:** Arquitectura en 3 Capas (Monolito Lógico) basado en **Node.js / Express**.
 
 ### Justificación técnica:
-La decisión se fundamenta en la necesidad de entregar un producto funcional dentro de un cronograma académico estricto. El equipo carece de experiencia en la gestión de sistemas distribuidos, lo que convierte a los **Microservicios** en un riesgo alto de fallo. 
+La decisión se fundamenta en la necesidad de entregar un producto funcional bajo un cronograma estricto, utilizando un stack basado en JavaScript/Node.js por su agilidad de desarrollo y gran soporte de la comunidad. 
 
-La **Arquitectura en 3 Capas** nos permite:
-1.  **Garantizar Integridad (RNF-06):** Al usar una sola base de datos MySQL, gestionamos transacciones ACID de forma nativa para el módulo de pagos.
-2.  **Rendimiento (RNF-01):** Cumplimos con el tiempo de respuesta < 2s al evitar latencias de red entre servicios.
-3.  **Seguridad (RNF-02/03):** Centralizamos la autenticación JWT y el control RBAC en un único flujo.
+Esta arquitectura nos permite:
+1.  **Garantizar Integridad (RNF-06):** Uso de **MySQL** como base de datos relacional para gestionar transacciones ACID de forma nativa en módulos críticos como el de pagos.
+2.  **Optimización de Rendimiento (RNF-01):** Para cumplir con el tiempo de respuesta < 2s y mitigar directamente el riesgo detectado en el **Issue #25** de GitHub sobre la latencia en la validación de seguridad, se incorpora **Redis** como capa de caché para la gestión de sesiones y tokens JWT.
+3.  **Seguridad Centralizada (RNF-02/03):** Implementación de un flujo de autenticación robusto mediante el middleware **Passport.js** dentro del mismo proceso de la API, evitando la complejidad de gestionar seguridad en servicios distribuidos.
 
 ## 4. Consecuencias
 
-*   **Ventaja Principal:** Simplicidad de implementación y despliegue rápido. Menor sobrecarga (overhead) de configuración y monitoreo.
-*   **Riesgo Aceptado:** Escalabilidad limitada. Si el tráfico supera las expectativas, el escalado será vertical o mediante réplicas de todo el monolito. Se acepta esta deuda técnica dado el contexto del proyecto.
-*   **Mitigación de Riesgo:** Se implementará una estructura de carpetas por dominios (Modular Monolith) para facilitar una posible migración a microservicios en el futuro si fuera necesario.
+* **Ventaja Principal:** Desarrollo acelerado y simplicidad de despliegue al mantener un único artefacto para toda la lógica de negocio.
+* **Riesgo Aceptado (Complejidad de Datos):** Se acepta la gestión de dos motores de persistencia (MySQL + Redis). Aunque incrementa levemente la carga operacional, es una medida necesaria para garantizar el atributo de calidad de rendimiento y resolver cuellos de botella técnicos.
+* **Consistencia Documental:** Esta actualización alinea formalmente el registro de decisiones con los diagramas de Contenedores (Nivel 2) y Componentes (Nivel 3), eliminando las discrepancias de stack tecnológico que existían anteriormente.
 
 ## 5. Alternativa Descartada
 
 **Microservicios:**
-Se descarta debido a que la complejidad de implementar comunicación entre servicios (API Gateway, Service Discovery) y la gestión de múltiples bases de datos consumiría el tiempo destinado al desarrollo de la lógica de negocio. Además, la consistencia de datos en pagos requeriría patrones complejos (Saga/Outbox) que el equipo no domina.
+Se descarta debido a la alta complejidad operacional y la falta de experiencia previa del equipo en orquestación avanzada. La introducción de una capa de caché (Redis) dentro del monolito se considera una solución mucho más eficiente y menos riesgosa que fragmentar el sistema en múltiples microservicios independientes.
 
 ---
-**Decisión tomada por el equipo de arquitectura.**
-
+**Decisión actualizada por el equipo de arquitectura para asegurar la paridad entre el diseño y la implementación real.**
