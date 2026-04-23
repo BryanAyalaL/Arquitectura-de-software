@@ -4,12 +4,12 @@
  * Repositorio encargado de gestionar las operaciones de acceso a datos
  * relacionadas con los usuarios.
  * 
- * Aplica el patrón Repository para separar la lógica de negocio
+ * Implementa el patrón Repository para separar la lógica de negocio
  * del acceso a la base de datos.
  */
 class UserRepository {
   /**
-   * Constructor del repositorio.
+   * Constructor del repositorio
    * @param {Object} db - Instancia de conexión a la base de datos
    */
   constructor(db) {
@@ -17,7 +17,7 @@ class UserRepository {
   }
 
   /**
-   * Obtiene todos los usuarios del sistema.
+   * Obtiene todos los usuarios
    * 
    * @returns {Promise<Array>} Lista de usuarios
    */
@@ -30,10 +30,10 @@ class UserRepository {
   }
 
   /**
-   * Obtiene un usuario por su ID.
+   * Obtiene un usuario por su ID
    * 
    * @param {number} id - ID del usuario
-   * @returns {Promise<Object>} Usuario encontrado
+   * @returns {Promise<Object|null>} Usuario encontrado o null
    */
   async getUserById(id) {
     try {
@@ -42,18 +42,14 @@ class UserRepository {
         [id]
       );
 
-      if (result.length === 0) {
-        throw new Error("Usuario no encontrado");
-      }
-
-      return result;
+      return result.length > 0 ? result[0] : null;
     } catch (error) {
       throw new Error("Error al obtener usuario");
     }
   }
 
   /**
-   * Crea un nuevo usuario en la base de datos.
+   * Crea un nuevo usuario
    * 
    * @param {Object} user - Datos del usuario
    * @param {string} user.name - Nombre del usuario
@@ -78,37 +74,41 @@ class UserRepository {
   }
 
   /**
-   * Actualiza los datos de un usuario existente.
+   * Actualiza un usuario existente
    * 
    * @param {number} id - ID del usuario
    * @param {Object} user - Nuevos datos del usuario
-   * @returns {Promise<Object>} Resultado de la operación
+   * @returns {Promise<Object|null>} Resultado o null si no existe
    */
   async updateUser(id, user) {
     try {
       const { name, email } = user;
 
-      return await this.db.query(
+      const result = await this.db.query(
         "UPDATE users SET name = ?, email = ? WHERE id = ?",
         [name, email, id]
       );
+
+      return result;
     } catch (error) {
       throw new Error("Error al actualizar usuario");
     }
   }
 
   /**
-   * Elimina un usuario del sistema.
+   * Elimina un usuario
    * 
    * @param {number} id - ID del usuario
-   * @returns {Promise<Object>} Resultado de la operación
+   * @returns {Promise<Object|null>} Resultado o null si no existe
    */
   async deleteUser(id) {
     try {
-      return await this.db.query(
+      const result = await this.db.query(
         "DELETE FROM users WHERE id = ?",
         [id]
       );
+
+      return result;
     } catch (error) {
       throw new Error("Error al eliminar usuario");
     }
