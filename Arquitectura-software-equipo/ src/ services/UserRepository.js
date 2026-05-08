@@ -1,4 +1,35 @@
 /**
+ * IUserRepository
+ * 
+ * Interfaz que define el contrato que debe cumplir cualquier
+ * implementación del repositorio de usuarios (DIP — Dependency Inversion Principle).
+ * 
+ * En JavaScript no existen interfaces nativas, por lo que se simula
+ * lanzando errores si los métodos no son implementados por la subclase.
+ */
+class IUserRepository {
+  async getAllUsers() {
+    throw new Error("getAllUsers() debe ser implementado");
+  }
+
+  async getUserById(id) {
+    throw new Error("getUserById() debe ser implementado");
+  }
+
+  async createUser(user) {
+    throw new Error("createUser() debe ser implementado");
+  }
+
+  async updateUser(id, user) {
+    throw new Error("updateUser() debe ser implementado");
+  }
+
+  async deleteUser(id) {
+    throw new Error("deleteUser() debe ser implementado");
+  }
+}
+
+/**
  * UserRepository
  * 
  * Repositorio encargado de gestionar las operaciones de acceso a datos
@@ -6,8 +37,9 @@
  * 
  * Implementa el patrón Repository para separar la lógica de negocio
  * del acceso a la base de datos.
+ * Extiende IUserRepository aplicando el principio DIP.
  */
-class UserRepository {
+class UserRepository extends IUserRepository {
   /**
    * Constructor del repositorio
    * @param {Object} db - Instancia de conexión a la base de datos
@@ -115,4 +147,4 @@ class UserRepository {
   }
 }
 
-module.exports = UserRepository;
+module.exports = { IUserRepository, UserRepository };

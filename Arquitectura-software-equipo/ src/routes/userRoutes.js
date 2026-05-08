@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const UserController = require("../controllers/UserController");
-const UserRepository = require("../ services/UserRepository");
+const { UserRepository } = require("../ services/UserRepository");
 
 // DB simulada
 const db = {
