@@ -3,7 +3,7 @@ const router = express.Router();
 const authMiddleware = require("../middleware/authMiddleware");
 
 const UserController = require("../controllers/UserController");
-const { UserRepository } = require("../ services/UserRepository");
+const { UserRepository } = require("../services/UserRepository");
 
 // DB simulada
 const db = {

@@ -45,6 +45,7 @@ class UserRepository extends IUserRepository {
    * @param {Object} db - Instancia de conexión a la base de datos
    */
   constructor(db) {
+    super(); // Se debe llamar con supper() para extender la clase base
     this.db = db;
   }
 

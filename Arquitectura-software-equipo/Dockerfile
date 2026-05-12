@@ -28,6 +28,7 @@ WORKDIR /app
 COPY --from=builder /app/package.json /app/package-lock.json ./
 
 # Instalamos solo las dependencias de producción
+# CI es para asegurar que se instalen exactamente las versiones del lockfile, y omitimos las devDependencies
 RUN npm ci --omit=dev
 
 # Copiamos el código fuente necesario para producción
@@ -43,4 +44,4 @@ USER node
 EXPOSE 3000
 
 # Comando para iniciar la aplicación
-CMD ["npm", "src/server.js"]
+CMD ["node", "src/server.js"]
