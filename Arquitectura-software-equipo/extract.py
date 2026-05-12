@@ -2,7 +2,7 @@ import os
 
 # Script para extraer el código de un proyecto y guardarlo en un archivo Markdown
 # Ruta del proyecto a analizar y archivo de salida
-ROOT_DIR = "/home/bryan/Documentos/Arquitectura-de-software"
+ROOT_DIR = os.getcwd()
 OUTPUT_FILE = "project_dump.md"
 
 CODE_EXTENSIONS = {
