@@ -1,65 +1,9 @@
-version: '3.8'
-
+version: "3.8"
 services:
-  # 1. Nuestra API (Node.js)
-  api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: app-turismo:1.0.0
-    container_name: turismo_api
-    restart: unless-stopped
+  app:
+    build: .
     ports:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      - DB_HOST=db
-      - DB_PORT=5432
-      - DB_USER=admin
-      - DB_PASS=secret
-      - DB_NAME=turismo_db
-      - REDIS_HOST=cache
-      - REDIS_PORT=6379
-    depends_on:
-      - db
-      - cache
-    networks:
-      - turismo_network
-
-  # 2. Base de Datos (PostgreSQL)
-  db:
-    image: postgres:15-alpine
-    container_name: turismo_db
-    restart: unless-stopped
-    environment:
-      - POSTGRES_USER=admin
-      - POSTGRES_PASSWORD=secret
-      - POSTGRES_DB=turismo_db
-    ports:
-      - "5432:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    networks:
-      - turismo_network
-
-  # 3. Capa de Caché (Redis)
-  cache:
-    image: redis:7-alpine
-    container_name: turismo_cache
-    restart: unless-stopped
-    ports:
-      - "6379:6379"
-    volumes:
-      - redisdata:/data
-    networks:
-      - turismo_network
-
-# Volúmenes para persistencia de datos (si apagas el contenedor, la BD no se borra)
-volumes:
-  pgdata:
-  redisdata:
-
-# Red virtual privada para que los contenedores hablen entre ellos usando su nombre ("db", "cache")
-networks:
-  turismo_network:
-    driver: bridge
+      - JWT_SECRET=supersecret
