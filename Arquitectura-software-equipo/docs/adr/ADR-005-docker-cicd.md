@@ -11,7 +11,7 @@
 
 Durante el desarrollo del sistema de planificación de viajes, nos enfrentamos al clásico problema de **"Funciona en mi máquina"**. Dado que los desarrolladores utilizan diferentes sistemas operativos (Ubuntu, Windows, Mac), existen discrepancias en las versiones de Node.js, dependencias nativas y configuraciones locales. 
 
-Adicionalmente, el sistema requiere una API, una base de datos relacional (PostgreSQL) y una caché (Redis). Levantar todo esto manualmente es propenso a errores. Necesitamos una estrategia que garantice que la aplicación se ejecute de forma idéntica en cualquier entorno y un mecanismo que automatice las pruebas y el despliegue a producción.
+Adicionalmente, el sistema requiere una API, una base de datos relacional (MySQL) y una caché (Redis). Levantar todo esto manualmente es propenso a errores. Necesitamos una estrategia que garantice que la aplicación se ejecute de forma idéntica en cualquier entorno y un mecanismo que automatice las pruebas y el despliegue a producción.
 
 ---
 
@@ -41,7 +41,7 @@ El `Dockerfile` es la "receta" que empaqueta nuestra API.
 ### B. Docker Compose (Orquestación)
 El archivo `docker-compose.yml` actúa como el director de orquesta. 
 * **Redes internas:** Crea una red virtual (`turismo_network`). La API puede conectarse a la BD simplemente llamando al host `db` en lugar de direcciones IP complejas, ya que Docker actúa como DNS interno.
-* **Volúmenes (`volumes`):** Se declaran para PostgreSQL y Redis. Esto crea un "disco duro virtual" en la máquina anfitriona. Si el contenedor de la BD se destruye, los datos de los usuarios NO se pierden.
+* **Volúmenes (`volumes`):** Se declaran para MySQL y Redis. Esto crea un "disco duro virtual" en la máquina anfitriona. Si el contenedor de la BD se destruye, los datos de los usuarios NO se pierden.
 * **Variables de Entorno (`environment`):** Cumpliendo con la regla de oro de *The Twelve-Factor App*, las credenciales y puertos se inyectan desde este archivo, nunca quemados en el código fuente.
 
 **Comandos clave:**
@@ -65,7 +65,7 @@ Es un "robot" que vive en nuestro repositorio.
 * **Recuperación rápida:** Ante una caída del servidor, levantar toda la infraestructura nuevamente toma menos de 10 segundos con `docker compose up`.
 
 ### ⚠️ Desventajas / Trade-offs
-* **Consumo de recursos locales:** Ejecutar PostgreSQL, Redis y la API simultáneamente mediante Docker consume más memoria RAM en los equipos de los desarrolladores.
+* **Consumo de recursos locales:** Ejecutar MySQL, Redis y la API simultáneamente mediante Docker consume más memoria RAM en los equipos de los desarrolladores.
 * **Curva de aprendizaje:** Exige que todo el equipo conozca los comandos básicos de Docker descritos en la sección 3.
 
 ---
