@@ -1,3 +1,5 @@
 node_modules/
 .env
 package-lock.json
+# Volcado de código para IA/Documentación
+project_dump.md

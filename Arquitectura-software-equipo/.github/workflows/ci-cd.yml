@@ -1,0 +1,55 @@
+name: Pipeline CI/CD - Turismo App
+
+# 1. ¿Cuándo se activa este robot?
+# Se activará cada vez que alguien haga un "push" o un "pull request" a la rama principal (main o develop)
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+    branches: [ "main", "develop" ]
+
+jobs:
+  # ==========================================
+  # FASE DE INTEGRACIÓN CONTINUA (CI)
+  # ==========================================
+  build-and-test:
+    runs-on: ubuntu-latest # El servidor gratuito que nos presta GitHub
+
+    steps:
+      # Paso 1: El robot descarga tu código fuente
+      - name: Clonar el repositorio
+        uses: actions/checkout@v4 # checkout@v4 es la versión más reciente de esta acción oficial de GitHub para clonar repositorios. Es como hacer "git clone" pero de forma automática en el pipeline
+
+      # Paso 2: El robot instala Node.js
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4 # setup-node@v4 es la versión más reciente de esta acción oficial de GitHub para configurar Node.js. Es como hacer "nvm install" pero de forma automática en el pipeline
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      # Paso 3: El robot instala dependencias (para revisar que no haya errores)
+      - name: Instalar dependencias
+        run: npm ci
+
+      # Paso 4: Validamos que la imagen de Docker se puede construir
+      # Si el Dockerfile tiene un error (ej. el espacio en " src"), el pipeline fallará aquí y evitará un desastre en producción
+      - name: Construir Imagen Docker de Prueba
+        run: docker build -t app-turismo:test .
+
+  # ==========================================
+  # FASE DE DESPLIEGUE CONTINUO (CD) - Simulación
+  # ==========================================
+  deploy:
+    # Solo despliega si la fase anterior (build-and-test) fue exitosa
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    # Solo despliega si el código entró a la rama 'main' (producción)
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: 🚀 Simular Despliegue a Render/Railway
+      # El run es un bloque de comandos que se ejecutarán en la terminal del servidor de GitHub Actions. Aquí solo imprimimos mensajes para simular el despliegue, pero en un proyecto real aquí irían los comandos para actualizar el contenedor en el servidor (ej. usando SSH, CLI de Render/Railway, etc.)
+        run: |
+          echo "Desplegando la nueva versión de app-turismo en producción..."
+          echo "En un entorno real, aquí iría el comando para actualizar el contenedor en el servidor."
+          echo "✅ ¡Despliegue exitoso!"
