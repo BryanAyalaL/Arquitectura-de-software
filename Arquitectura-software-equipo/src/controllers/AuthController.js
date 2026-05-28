@@ -3,6 +3,8 @@ const bcrypt = require("bcryptjs");
 
 const SECRET = process.env.JWT_SECRET || "change_this_secret";
 const REFRESH_SECRET = process.env.REFRESH_SECRET || "refresh_secret_key";
+const logger =
+require("../Config/Logger");
 
 class AuthController {
   constructor(userRepository) {
@@ -12,6 +14,7 @@ class AuthController {
   async login(req, res) {
     try {
       const { email, password } = req.body;
+      logger.info("Intento login", { email });
 
       if (!email || !password) {
         return res.status(400).json({ message: "Email y contrasena son requeridos" });
@@ -20,13 +23,16 @@ class AuthController {
       const user = await this.userRepository.getUserByEmail(email);
 
       if (!user) {
-        return res.status(401).json({ message: "Credenciales incorrectas" });
+          logger.warn("Usuario no encontrado",{ email });
+          return res.status(401).json({message:"Credenciales incorrectas"});
+
       }
 
       const isValidPassword = await bcrypt.compare(password, user.passwordHash);
 
       if (!isValidPassword) {
-        return res.status(401).json({ message: "Credenciales incorrectas" });
+        logger.warn("Password incorrecta",{ email });
+        return res.status(401).json({message:"Credenciales incorrectas"});
       }
 
       // Access Token: 1 hora
@@ -52,9 +58,11 @@ class AuthController {
           email: user.email,
         },
       });
-    } catch (error) {
-      res.status(500).json({ message: "Error al iniciar sesion" });
-    }
+    } catch(error){
+      logger.error("Error login",{message:error.message});
+      res.status(500).json({message:"Error al iniciar sesion"});
+
+}
   }
 
   async register(req, res) {
@@ -92,6 +100,13 @@ class AuthController {
         { id: user.id, name: user.name, email: user.email },
         SECRET,
         { expiresIn: "1h" }
+      );
+
+      logger.info("Login exitoso",
+        {
+          userId:user.id,
+          email:user.email
+        }
       );
 
       res.status(200).json({ accessToken: newAccessToken });
