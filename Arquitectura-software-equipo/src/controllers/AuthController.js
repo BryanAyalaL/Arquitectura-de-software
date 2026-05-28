@@ -52,10 +52,20 @@ class AuthController {
           email: user.email,
         },
       });
-    } catch (error) {
-      res.status(500).json({ message: "Error al iniciar sesion" });
+    } catch(error){
+
+   console.error(error);
+
+   res.status(500).json({
+
+      message:"Error interno del servidor",
+
+      error:error.message
+
+   });
+
+}
     }
-  }
 
   async register(req, res) {
     try {
