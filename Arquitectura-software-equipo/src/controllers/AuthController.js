@@ -58,12 +58,17 @@ class AuthController {
           email: user.email,
         },
       });
-    } catch(error){
-      logger.error("Error login",{message:error.message});
-      res.status(500).json({message:"Error al iniciar sesion"});
+    }} catch (error) {
+      logger.error("Error login",{ message: error.message });
+      res.status(500).json({
+        message: "Error al iniciar sesion"
+      });
+    }
+
+     
 
 }
-  }
+    }
 
   async register(req, res) {
     try {
