@@ -1,12 +1,17 @@
+const logger = require("../Config/Logger");
 
-/**
- * Middleware de logging
- * 
- * Registra cada petición HTTP que llega al servidor.
- */
 function loggerMiddleware(req, res, next) {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+
+  logger.info("HTTP Request", {
+
+    method: req.method,
+    url: req.url,
+    timestamp: new Date().toISOString()
+
+  });
+
   next();
+
 }
 
 module.exports = loggerMiddleware;
