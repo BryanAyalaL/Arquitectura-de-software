@@ -1,27 +1,39 @@
 const jwt = require("jsonwebtoken");
 
-const SECRET = "secreto_super_seguro";
+const SECRET =
+process.env.JWT_SECRET || "change_this_secret";
 
 module.exports = (req, res, next) => {
-  const authHeader = req.headers["authorization"];
 
-  // ❌ No hay token
-  if (!authHeader) {
-    return res.status(401).json({
-      message: "Acceso denegado: token requerido",
-    });
-  }
+const authHeader =
+req.headers["authorization"];
 
-  const token = authHeader.split(" ")[1];
+if (!authHeader) {
 
-  try {
-    const decoded = jwt.verify(token, SECRET);
+return res.status(401).json({
+message:"Acceso denegado: token requerido"
+});
 
-    req.user = decoded; // guardas el usuario
-    next();
-  } catch (error) {
-    return res.status(401).json({
-      message: "Token inválido",
-    });
-  }
+}
+
+const token =
+authHeader.split(" ")[1];
+
+try {
+
+const decoded =
+jwt.verify(token, SECRET);
+
+req.user = decoded;
+
+next();
+
+} catch(error){
+
+return res.status(401).json({
+message:"Token inválido"
+});
+
+}
+
 };

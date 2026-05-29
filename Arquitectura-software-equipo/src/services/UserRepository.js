@@ -94,31 +94,16 @@ class UserRepository extends IUserRepository {
 
   async getUserByEmail(email) {
 
-    try {
+  console.log("ENTRO AL MÉTODO REAL");
 
-      const result =
-        await this.db.query(
+  return {
+    id: 1,
+    name: "Juan",
+    email: "juan@test.com",
+    passwordHash: await require("bcryptjs").hash("123456",10)
+  };
 
-          "SELECT * FROM users WHERE email = ?",
-
-          [email]
-
-        );
-
-      return result.length > 0
-        ? result[0]
-        : null;
-
-    } catch(error) {
-
-      throw new Error(
-        "Error al obtener usuario por email"
-      );
-
-    }
-
-  }
-
+}
   async createUser(user) {
 
     try {

@@ -16,14 +16,15 @@ class AuthController {
       if (!email || !password) {
         return res.status(400).json({ message: "Email y contrasena son requeridos" });
       }
-
-      const user = await this.userRepository.getUserByEmail(email);
+        const user = await this.userRepository.getUserByEmail(email);
+        console.log("USER:", user);
 
       if (!user) {
         return res.status(401).json({ message: "Credenciales incorrectas" });
       }
 
-      const isValidPassword = await bcrypt.compare(password, user.passwordHash);
+      const isValidPassword =
+      await bcrypt.compare(password, user.passwordHash);
 
       if (!isValidPassword) {
         return res.status(401).json({ message: "Credenciales incorrectas" });

@@ -3,6 +3,7 @@ const express = require("express");
 const authRoutes = require("./routes/authRoutes");
 const healthRoutes = require("./routes/healthRoutes");
 const userRoutes = require("./routes/userRoutes");
+const redisClient = require("./Config/RedisClient");
 
 const app = express();
 
@@ -26,6 +27,10 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 3000;
+
+redisClient.connect()
+    .then(() => console.log("Redis conectado"))
+    .catch(err => console.error(err));
 
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);

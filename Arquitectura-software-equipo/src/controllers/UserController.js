@@ -7,6 +7,8 @@
  * Se comunica con el UserRepository para acceder a los datos
  * y aplica la lógica de negocio básica.
  */
+const redisClient = require("../Config/RedisClient");
+
 class UserController {
   /**
    * Constructor del controlador
@@ -27,13 +29,21 @@ class UserController {
    * @param {Object} res - Response de Express
    */
   async getUsers(req, res) {
-    try {
-      const users = await this.userRepository.getAllUsers();
-      res.status(200).json(users);
-    } catch (error) {
-      res.status(500).json({ message: "Error al obtener usuarios" });
+  try {
+    const cachedUsers = await redisClient.get("users");
+    if (cachedUsers) {
+      return res.status(200).json(JSON.parse(cachedUsers));
     }
+    const users = await this.userRepository.getAllUsers();
+    await redisClient.setEx("users",60,JSON.stringify(users));
+    res.status(200).json(users);
+
+  } catch (error) {
+    res.status(500).json({
+      message: "Error al obtener usuarios"
+    });
   }
+}
 
   /**
    * Obtiene un usuario por su ID
