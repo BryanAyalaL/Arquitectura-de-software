@@ -3,10 +3,21 @@ const express = require("express");
 const authRoutes = require("./routes/authRoutes");
 const healthRoutes = require("./routes/healthRoutes");
 const userRoutes = require("./routes/userRoutes");
+const { metricsMiddleware, register } = require("./middleware/metricsMiddleware");
 
 const app = express();
 
 app.use(express.json());
+app.use(metricsMiddleware);
+
+app.get("/metrics", async (req, res) => {
+  try {
+    res.set("Content-Type", register.contentType); 
+    res.end(await register.metrics()); 
+  } catch (error) {
+    res.status(500).end(error);
+  }
+});
 
 app.use("/health", healthRoutes);
 app.use("/auth", authRoutes);
