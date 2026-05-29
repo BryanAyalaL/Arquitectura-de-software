@@ -30,21 +30,36 @@ class UserController {
    */
   async getUsers(req, res) {
   try {
+
     const cachedUsers = await redisClient.get("users");
+
     if (cachedUsers) {
+      console.log("CACHE HIT");
       return res.status(200).json(JSON.parse(cachedUsers));
     }
+
+    console.log("CACHE MISS → CONSULTANDO DB");
+
     const users = await this.userRepository.getAllUsers();
-    await redisClient.setEx("users",60,JSON.stringify(users));
+
+    await redisClient.setEx(
+      "users",
+      60,
+      JSON.stringify(users)
+    );
+
     res.status(200).json(users);
 
   } catch (error) {
+
+    console.error(error);
+
     res.status(500).json({
       message: "Error al obtener usuarios"
     });
+
   }
 }
-
   /**
    * Obtiene un usuario por su ID
    * 
