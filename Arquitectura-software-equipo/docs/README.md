@@ -29,4 +29,3 @@ npm install
 node src/server.js
 ```
 
-Si quieres que genere documentación más detallada (OpenAPI/Swagger o Markdown por controlador), dime y la añado.
