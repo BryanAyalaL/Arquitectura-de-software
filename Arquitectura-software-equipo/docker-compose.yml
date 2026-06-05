@@ -1,1 +1,73 @@
+version: '3.8'
 
+services:
+  # 1. Nuestra API (Node.js)
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: app-turismo:1.0.0
+    container_name: turismo_api
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - JWT_SECRET=supersecret
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_USER=admin
+      - DB_PASS=secret
+      - DB_NAME=turismo_db
+      - REDIS_HOST=cache
+      - REDIS_PORT=6379
+    depends_on:
+      - db
+      - cache
+    networks:
+      - turismo_network
+
+  # 2. Base de Datos (Ahora 100% alineado con ADR-001: MySQL)
+  db:
+    image: mysql:8.0
+    container_name: turismo_db
+    restart: unless-stopped
+    environment:
+      - MYSQL_ROOT_PASSWORD=secret
+      - MYSQL_USER=admin
+      - MYSQL_PASSWORD=secret
+      - MYSQL_DATABASE=turismo_db
+    ports:
+      - "3306:3306"
+    volumes:
+      - dbdata:/var/lib/mysql
+    networks:
+      - turismo_network
+
+  # 3. Capa de Caché (Redis)
+  cache:
+    image: redis:7-alpine
+    container_name: turismo_cache
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    networks:
+      - turismo_network
+
+# Volúmenes para persistencia de datos (si apagas el contenedor, la BD no se borra)
+volumes:
+  dbdata:
+  redisdata:
+
+# Red virtual privada para que los contenedores hablen entre ellos usando su nombre ("db", "cache")
+networks:
+  turismo_network:
+    driver: bridge
+
+# Comandos útiles:
+# Sirven respetivamente para apagar y eliminar contenedores/volúmenes, levantar todo el stack con reconstrucción de imágenes, y listar los contenedores activos.
+# docker compose down -v
+# docker compose up -d --build
+# docker ps

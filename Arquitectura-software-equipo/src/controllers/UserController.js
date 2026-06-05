@@ -7,13 +7,19 @@
  * Se comunica con el UserRepository para acceder a los datos
  * y aplica la lógica de negocio básica.
  */
+const redisClient = require("../Config/RedisClient");
+
 class UserController {
   /**
    * Constructor del controlador
    * @param {Object} userRepository - Instancia del repositorio de usuarios
+   * @param {Object} emailService - Instancia del servicio de correo electrónico
    */
-  constructor(userRepository) {
+  constructor(userRepository, emailService) {
     this.userRepository = userRepository;
+    
+    // EmailService se inyecta en el controlador para enviar correos electrónicos
+    this.emailService = emailService; // emailService es una instancia del servicio de correo electrónico
   }
 
   /**
@@ -23,14 +29,37 @@ class UserController {
    * @param {Object} res - Response de Express
    */
   async getUsers(req, res) {
-    try {
-      const users = await this.userRepository.getAllUsers();
-      res.status(200).json(users);
-    } catch (error) {
-      res.status(500).json({ message: "Error al obtener usuarios" });
-    }
-  }
+  try {
 
+    const cachedUsers = await redisClient.get("users");
+
+    if (cachedUsers) {
+      console.log("CACHE HIT");
+      return res.status(200).json(JSON.parse(cachedUsers));
+    }
+
+    console.log("CACHE MISS → CONSULTANDO DB");
+
+    const users = await this.userRepository.getAllUsers();
+
+    await redisClient.setEx(
+      "users",
+      60,
+      JSON.stringify(users)
+    );
+
+    res.status(200).json(users);
+
+  } catch (error) {
+
+    console.error(error);
+
+    res.status(500).json({
+      message: "Error al obtener usuarios"
+    });
+
+  }
+}
   /**
    * Obtiene un usuario por su ID
    * 
@@ -64,13 +93,24 @@ class UserController {
 
       // Validación básica
       if (!name || !email) {
+        // Si los datos son incompletos, respondemos con un error 400 (Bad Request)
         return res.status(400).json({ message: "Datos incompletos" });
       }
 
+      // Creamos el usuario en la base de datos
       const result = await this.userRepository.createUser(req.body);
-      res.status(201).json(result);
+
+      // Enviamos un correo de bienvenida al nuevo usuario utilizando el servicio de correo electrónico
+      await this.emailService.sendWelcomeEmail(email, name);
+
+      // Respondemos con un mensaje de éxito y los datos del nuevo usuario
+      res.status(201).json({ 
+        message: "Usuario creado y correo de bienvenida enviado",
+        data: result 
+      });
+
     } catch (error) {
-      res.status(500).json({ message: "Error al crear usuario" });
+      res.status(500).json({ message: "Error interno al crear el usuario" });
     }
   }
 
