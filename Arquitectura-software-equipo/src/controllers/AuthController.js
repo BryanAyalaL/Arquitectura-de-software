@@ -4,11 +4,25 @@ const bcrypt = require("bcryptjs");
 const SECRET = process.env.JWT_SECRET || "change_this_secret";
 const REFRESH_SECRET = process.env.REFRESH_SECRET || "refresh_secret_key";
 
+/**
+ * AuthController
+ *
+ * Controlador responsable de las operaciones de autenticación:
+ * - `login` : validar credenciales y devolver tokens
+ * - `register` : crear un nuevo usuario
+ * - `refreshToken` : renovar access token usando refresh token
+ */
 class AuthController {
   constructor(userRepository) {
     this.userRepository = userRepository;
   }
 
+  /**
+   * Login
+   * @param {import('express').Request} req - Express request, espera `body.email` y `body.password`
+   * @param {import('express').Response} res - Express response
+   * @returns {Promise<void>}
+   */
   async login(req, res) {
     try {
       const { email, password } = req.body;
@@ -16,33 +30,29 @@ class AuthController {
       if (!email || !password) {
         return res.status(400).json({ message: "Email y contrasena son requeridos" });
       }
-        const user = await this.userRepository.getUserByEmail(email);
-        console.log("USER:", user);
+
+      const user = await this.userRepository.getUserByEmail(email);
 
       if (!user) {
         return res.status(401).json({ message: "Credenciales incorrectas" });
       }
 
-      const isValidPassword =
-      await bcrypt.compare(password, user.passwordHash);
+      // Comprobar contraseña
+      const isValidPassword = await bcrypt.compare(password, user.passwordHash);
 
       if (!isValidPassword) {
         return res.status(401).json({ message: "Credenciales incorrectas" });
       }
 
-      // Access Token: 1 hora
+      // Generar Access Token (1 hora)
       const accessToken = jwt.sign(
         { id: user.id, name: user.name, email: user.email },
         SECRET,
         { expiresIn: "1h" }
       );
 
-      // Refresh Token: 7 dias
-      const refreshToken = jwt.sign(
-        { id: user.id },
-        REFRESH_SECRET,
-        { expiresIn: "7d" }
-      );
+      // Generar Refresh Token (7 dias)
+      const refreshToken = jwt.sign({ id: user.id }, REFRESH_SECRET, { expiresIn: "7d" });
 
       res.status(200).json({
         accessToken,
@@ -68,6 +78,11 @@ class AuthController {
 }
     }
 
+  /**
+   * Register - crear nuevo usuario
+   * @param {import('express').Request} req - espera `body.name`, `body.email`, `body.password`
+   * @param {import('express').Response} res
+   */
   async register(req, res) {
     try {
       const { name, email, password } = req.body;
@@ -84,6 +99,11 @@ class AuthController {
     }
   }
 
+  /**
+   * Refresh token - renueva access token usando refresh token válido
+   * @param {import('express').Request} req - espera `body.refreshToken`
+   * @param {import('express').Response} res
+   */
   async refreshToken(req, res) {
     try {
       const { refreshToken } = req.body;
